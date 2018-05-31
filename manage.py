@@ -199,7 +199,7 @@ def refresh_itemized():
     """These are run nightly to refresh the itemized schedule A and B data."""
 
     refresh_itemized_a()
-    refresh_itemized_b()
+    # refresh_itemized_b()
     rebuild_itemized_e()
 
     logger.info('Finished updating incremental aggregates.')
@@ -218,18 +218,18 @@ def refresh_itemized_a():
 
     logger.info('Finished updating Schedule A.')
 
-@manager.command
-def refresh_itemized_b():
-    """Used to refresh the itemized Schedule B data."""
-    logger.info('Updating Schedule B...')
-    message = partition.SchedBGroup.process_queues()
+# @manager.command
+# def refresh_itemized_b():
+#     """Used to refresh the itemized Schedule B data."""
+#     logger.info('Updating Schedule B...')
+#     message = partition.SchedBGroup.process_queues()
 
-    if message[0] == 0:
-        logger.info(message[1])
-    else:
-        logger.error(message[1])
+#     if message[0] == 0:
+#         logger.info(message[1])
+#     else:
+#         logger.error(message[1])
 
-    logger.info('Finished updating Schedule B.')
+#     logger.info('Finished updating Schedule B.')
 
 @manager.command
 def rebuild_itemized_e():
@@ -253,7 +253,7 @@ def add_itemized_partition_cycle(cycle=None, amount=1):
     else:
         cycle = int(cycle)
 
-    logger.info('Adding Schedule A and B cycles...')
+    logger.info('Adding Schedule A cycles...')
     try:
         with db.engine.begin() as connection:
             connection.execute(
@@ -263,7 +263,7 @@ def add_itemized_partition_cycle(cycle=None, amount=1):
                 start_year=cycle,
                 count=amount
             )
-        logger.info('Finished adding Schedule A and B cycles.')
+        logger.info('Finished adding Schedule A cycles.')
     except Exception:
         logger.exception("Failed to add partition cycles")
 
