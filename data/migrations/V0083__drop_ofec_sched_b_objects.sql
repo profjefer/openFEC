@@ -16,6 +16,62 @@ drop function public.ofec_sched_b_update_fulltext();
 drop function public.ofec_sched_b_update();
 
 -- ------------------
+-- Function: public.add_partition_cycles(numeric, numeric)
+-- ------------------
+CREATE OR REPLACE FUNCTION public.add_partition_cycles(
+    start_year numeric,
+    amount numeric)
+  RETURNS void AS
+$BODY$
+
+DECLARE
+
+    first_cycle_end_year NUMERIC = get_cycle(start_year);
+
+    last_cycle_end_year NUMERIC = first_cycle_end_year + (amount - 1) * 2;
+
+    master_table_name TEXT;
+
+    child_table_name TEXT;
+
+    schedule TEXT;
+
+BEGIN
+
+    FOR cycle IN first_cycle_end_year..last_cycle_end_year BY 2 LOOP
+
+        FOREACH schedule IN ARRAY ARRAY['a'] LOOP
+
+            master_table_name = format('ofec_sched_%s_master', schedule);
+
+            child_table_name = format('ofec_sched_%s_%s_%s', schedule, cycle - 1, cycle);
+
+            EXECUTE format('CREATE TABLE %I (
+
+                CHECK ( two_year_transaction_period in (%s, %s) )
+
+            ) INHERITS (%I)', child_table_name, cycle - 1, cycle, master_table_name);
+
+
+
+        END LOOP;
+
+    END LOOP;
+
+    PERFORM finalize_itemized_schedule_a_tables(first_cycle_end_year, last_cycle_end_year, FALSE, TRUE);
+ 
+END
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION public.add_partition_cycles(numeric, numeric)
+  OWNER TO fec;
+
+
+DROP FUNCTION public.finalize_itemized_schedule_b_tables(numeric, numeric, boolean, boolean);
+
+-- ------------------
 -- 	tables
 -- ------------------
 drop table if exists public.ofec_sched_b_queue_new;
